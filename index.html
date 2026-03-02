@@ -393,6 +393,7 @@ function doAssignment() {
   if (!state.leaderLocation) return;
 
   // 2. Assign Free Dogs — 1 per unique destination, but CAN share with Leader
+  // Set dogsToAssign AFTER leader draw, since drawing Kennel may have released dogs
   let dogsToAssign = state.freeDogs;
   let usedLocations = new Set();
 
@@ -502,8 +503,9 @@ function render() {
   const app = document.getElementById('app');
   const availLocs = getAvailableLocations();
   const destinationCount = availLocs.filter(l => l !== "Kennel").length;
-  const canAssign = state.freeDogs > 0 && destinationCount >= state.freeDogs;
   const totalDogs = state.freeDogs + state.kenneledDogs + state.eliminatedDogs;
+  const gameActive = totalDogs > 0 && (state.freeDogs > 0 || state.kenneledDogs > 0);
+  const canAssign = destinationCount > 0 && gameActive;
 
   let html = `
     <div class="header">
@@ -523,7 +525,7 @@ function render() {
     </div>
 
     <div class="section">
-      <button class="action-btn" onclick="doAssignment()" ${!canAssign || state.freeDogs === 0 ? 'disabled' : ''}>
+      <button class="action-btn" onclick="doAssignment()" ${!canAssign ? 'disabled' : ''}>
         ⚡ Assign Locations
       </button>
     </div>
