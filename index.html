@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dog Tracker">
+<title>Dog Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1115;
+    --surface: #1a1d24;
+    --surface2: #22262f;
+    --border: #2e3340;
+    --text: #e8e6e1;
+    --text-dim: #8a8d96;
+    --accent: #d4a843;
+    --accent-glow: rgba(212, 168, 67, 0.25);
+    --red: #c0392b;
+    --red-dim: rgba(192, 57, 43, 0.2);
+    --blue: #4a9eda;
+    --blue-dim: rgba(74, 158, 218, 0.15);
+    --green: #5dba5f;
+    --green-dim: rgba(93, 186, 95, 0.15);
+    --kennel: #b07ad8;
+    --kennel-dim: rgba(176, 122, 216, 0.15);
+    --radius: 12px;
+    --safe-top: env(safe-area-inset-top, 20px);
+    --safe-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(var(--safe-bottom) + 16px);
+  }
+
+  h1, h2, h3, .label { font-family: 'Oswald', sans-serif; }
+
+  .app {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 12px 16px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 8px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 22px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent-glow);
+  }
+  .header .sub { font-size: 11px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+
+  /* Sections */
+  .section { margin-bottom: 16px; }
+  .section-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+
+  /* Result Cards */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .icon-leader { background: var(--accent-glow); border: 1px solid var(--accent); }
+  .icon-dog { background: var(--blue-dim); border: 1px solid rgba(74,158,218,0.3); }
+  .icon-kennel { background: var(--kennel-dim); border: 1px solid rgba(176,122,216,0.3); }
+  .icon-eliminated { background: var(--red-dim); border: 1px solid rgba(192,57,43,0.3); opacity: 0.5; }
+
+  .result-info { flex: 1; }
+  .result-label { font-family: 'Oswald', sans-serif; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+  .result-location { font-size: 15px; font-weight: 600; margin-top: 1px; }
+  .loc-accent { color: var(--accent); }
+  .loc-blue { color: var(--blue); }
+  .loc-kennel { color: var(--kennel); }
+  .loc-red { color: var(--red); text-decoration: line-through; opacity: 0.5; }
+
+  /* Big Action Button */
+  .action-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent), #c4912a);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s;
+  }
+  .action-btn:active { transform: scale(0.97); }
+  .action-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15));
+    pointer-events: none;
+  }
+  .action-btn:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  /* Dog Management Buttons */
+  .dog-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .ctrl-btn {
+    flex: 1;
+    padding: 12px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:active { transform: scale(0.96); }
+  .ctrl-btn.kennel-btn { border-color: rgba(176,122,216,0.4); color: var(--kennel); }
+  .ctrl-btn.kennel-btn:disabled { opacity: 0.3; pointer-events: none; }
+  .ctrl-btn.elim-btn { border-color: rgba(192,57,43,0.4); color: var(--red); }
+  .ctrl-btn.elim-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  /* Location Management */
+  .loc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .loc-chip {
+    padding: 10px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .loc-chip:active { transform: scale(0.96); }
+  .loc-chip.eliminated {
+    background: var(--red-dim);
+    border-color: rgba(192,57,43,0.3);
+    color: var(--red);
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+  .loc-chip.kennel-loc {
+    border-color: rgba(176,122,216,0.3);
+    background: var(--kennel-dim);
+    position: relative;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .status-pill {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .pill-free { background: var(--green-dim); color: var(--green); border: 1px solid rgba(93,186,95,0.25); }
+  .pill-kennel { background: var(--kennel-dim); color: var(--kennel); border: 1px solid rgba(176,122,216,0.25); }
+  .pill-elim { background: var(--red-dim); color: var(--red); border: 1px solid rgba(192,57,43,0.25); }
+
+  /* Reset */
+  .reset-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .reset-btn:active { background: var(--surface); }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px dashed var(--border);
+  }
+  .empty-state .big-icon { font-size: 32px; margin-bottom: 8px; }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .confirm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .confirm-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-width: 300px;
+    width: 100%;
+    text-align: center;
+  }
+  .confirm-box h3 { font-size: 16px; letter-spacing: 1px; margin-bottom: 8px; }
+  .confirm-box p { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-btns button {
+    flex: 1; padding: 12px;
+    border-radius: 8px; border: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
+  }
+  .btn-cancel { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border) !important; }
+  .btn-confirm-red { background: var(--red); color: white; }
+  .btn-confirm-purple { background: var(--kennel); color: white; }
+  .btn-confirm-reset { background: var(--text-dim); color: var(--bg); }
+
+  .kennel-note {
+    background: var(--kennel-dim);
+    border: 1px solid rgba(176,122,216,0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--kennel);
+    margin-bottom: 12px;
+    text-align: center;
+    animation: slideIn 0.3s ease;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const ALL_LOCATIONS = [
+  "Armory", "Base Helicopter", "Boiler Room", "Generator Room",
+  "Kitchen", "Laboratory", "Radio Room", "Warehouse",
+  "Shed (Snow Cat)", "Weather Station", "Kennel"
+];
+
+// State
+let state = {
+  eliminatedLocations: new Set(),
+  freeDogs: 4,
+  kenneledDogs: 0,
+  eliminatedDogs: 0,
+  leaderLocation: null,
+  dogAssignments: [], // [{status: 'free'|'kenneled'|'eliminated', location: string|null}]
+  hasAssigned: false,
+  kennelReleaseOccurred: false
+};
+
+function resetState() {
+  state = {
+    eliminatedLocations: new Set(),
+    freeDogs: 4,
+    kenneledDogs: 0,
+    eliminatedDogs: 0,
+    leaderLocation: null,
+    dogAssignments: [],
+    hasAssigned: false,
+    kennelReleaseOccurred: false
+  };
+}
+
+let confirmAction = null;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getAvailableLocations() {
+  return ALL_LOCATIONS.filter(l => !state.eliminatedLocations.has(l));
+}
+
+function doAssignment() {
+  state.kennelReleaseOccurred = false;
+  const available = getAvailableLocations();
+  if (available.length === 0) return;
+
+  // Non-kennel locations are the only valid destinations
+  const destinations = available.filter(l => l !== "Kennel");
+  if (destinations.length === 0) return;
+
+  // If dogs are kenneled, Kennel is in the draw pool as a trigger only
+  // Otherwise it's excluded entirely
+  function buildDrawPool() {
+    if (state.kenneledDogs > 0) return [...available]; // includes Kennel as trigger
+    return [...destinations]; // Kennel excluded
+  }
+
+  // Draw a random location from pool; if Kennel is drawn, release dogs and redraw
+  function drawLocation(excludeSet) {
+    let pool = buildDrawPool().filter(l => !excludeSet.has(l));
+    if (pool.length === 0) return null;
+    let pick = pool[Math.floor(Math.random() * pool.length)];
+
+    if (pick === "Kennel") {
+      // Release all kenneled dogs
+      if (state.kenneledDogs > 0) {
+        state.freeDogs += state.kenneledDogs;
+        state.kenneledDogs = 0;
+        state.kennelReleaseOccurred = true;
+      }
+      // Redraw from non-Kennel locations
+      pool = pool.filter(l => l !== "Kennel");
+      if (pool.length === 0) return null;
+      pick = pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    return pick;
+  }
+
+  // 1. Assign Leader Token (no exclusions)
+  state.leaderLocation = drawLocation(new Set());
+  if (!state.leaderLocation) return;
+
+  // 2. Assign Free Dogs — 1 per unique destination, but CAN share with Leader
+  let dogsToAssign = state.freeDogs;
+  let usedLocations = new Set();
+
+  state.dogAssignments = [];
+
+  // Track eliminated dogs for display
+  for (let i = 0; i < state.eliminatedDogs; i++) {
+    state.dogAssignments.push({ status: 'eliminated', location: null });
+  }
+
+  // Assign dogs one by one
+  let assignedFreeDogs = 0;
+  let previousFreeDogs = dogsToAssign;
+
+  for (let i = 0; i < dogsToAssign; i++) {
+    // After a kennel release, dogsToAssign needs to reflect new free dogs
+    if (state.freeDogs > previousFreeDogs) {
+      dogsToAssign = state.freeDogs;
+      previousFreeDogs = state.freeDogs;
+    }
+
+    const loc = drawLocation(usedLocations);
+    if (!loc) break;
+
+    // Check if release happened during this draw (freeDogs may have increased)
+    if (state.kennelReleaseOccurred && state.freeDogs > assignedFreeDogs + (dogsToAssign - i - 1)) {
+      dogsToAssign = assignedFreeDogs + (state.freeDogs - assignedFreeDogs);
+    }
+
+    state.dogAssignments.push({ status: 'free', location: loc });
+    usedLocations.add(loc);
+    assignedFreeDogs++;
+  }
+
+  // Recalculate dogsToAssign after potential releases
+  // Any kenneled dogs that got released mid-assignment and haven't been assigned yet
+  // need to also be assigned
+  const totalFreeNow = assignedFreeDogs;
+
+  // Add remaining kenneled dogs for display (if any survived — shouldn't normally)
+  for (let i = 0; i < state.kenneledDogs; i++) {
+    state.dogAssignments.push({ status: 'kenneled', location: 'Kennel' });
+  }
+
+  state.freeDogs = assignedFreeDogs;
+  state.hasAssigned = true;
+  render();
+}
+
+function kennelDog() {
+  if (state.freeDogs <= 0) return;
+  state.freeDogs--;
+  state.kenneledDogs++;
+  state.hasAssigned = false;
+  state.leaderLocation = null;
+  state.dogAssignments = [];
+  confirmAction = null;
+  render();
+}
+
+function eliminateDog() {
+  if (state.freeDogs <= 0) return;
+  state.freeDogs--;
+  state.eliminatedDogs++;
+  state.hasAssigned = false;
+  state.leaderLocation = null;
+  state.dogAssignments = [];
+  confirmAction = null;
+  render();
+}
+
+function toggleLocation(loc) {
+  if (loc === "Kennel") return; // Can't eliminate kennel
+  if (state.eliminatedLocations.has(loc)) {
+    state.eliminatedLocations.delete(loc);
+  } else {
+    state.eliminatedLocations.add(loc);
+  }
+  // Clear assignments when locations change
+  state.hasAssigned = false;
+  state.leaderLocation = null;
+  state.dogAssignments = [];
+  render();
+}
+
+function showConfirm(type) {
+  confirmAction = type;
+  render();
+}
+
+function cancelConfirm() {
+  confirmAction = null;
+  render();
+}
+
+function resetGame() {
+  resetState();
+  confirmAction = null;
+  render();
+}
+
+function totalActiveDogs() {
+  return state.freeDogs + state.kenneledDogs;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const availLocs = getAvailableLocations();
+  const destinationCount = availLocs.filter(l => l !== "Kennel").length;
+  const canAssign = state.freeDogs > 0 && destinationCount >= state.freeDogs;
+  const totalDogs = state.freeDogs + state.kenneledDogs + state.eliminatedDogs;
+
+  let html = `
+    <div class="header">
+      <h1>🐕 Dog Tracker</h1>
+      <div class="sub">Board Game Helper</div>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-pill pill-free">Free: ${state.freeDogs}</span>
+      <span class="status-pill pill-kennel">Kenneled: ${state.kenneledDogs}</span>
+      <span class="status-pill pill-elim">Eliminated: ${state.eliminatedDogs}</span>
+    </div>
+
+    <div class="dog-controls">
+      <button class="ctrl-btn kennel-btn" onclick="showConfirm('kennel')" ${state.freeDogs <= 0 ? 'disabled' : ''}>🏠 Kennel a Dog</button>
+      <button class="ctrl-btn elim-btn" onclick="showConfirm('eliminate')" ${state.freeDogs <= 0 ? 'disabled' : ''}>💀 Eliminate a Dog</button>
+    </div>
+
+    <div class="section">
+      <button class="action-btn" onclick="doAssignment()" ${!canAssign || state.freeDogs === 0 ? 'disabled' : ''}>
+        ⚡ Assign Locations
+      </button>
+    </div>
+  `;
+
+  // Results
+  if (state.hasAssigned) {
+    html += `<div class="section"><div class="section-title">Assignment Results</div>`;
+
+    if (state.kennelReleaseOccurred) {
+      html += `<div class="kennel-note">🔓 Kennel was selected — all kenneled dogs released!</div>`;
+    }
+
+    // Leader Token
+    if (state.leaderLocation) {
+      html += `
+        <div class="result-card">
+          <div class="result-icon icon-leader">👑</div>
+          <div class="result-info">
+            <div class="result-label">Leader Token</div>
+            <div class="result-location loc-accent">${state.leaderLocation}</div>
+          </div>
+        </div>`;
+    }
+
+    // Dogs
+    const freeDogs = state.dogAssignments.filter(d => d.status === 'free');
+    const kenneledDogs = state.dogAssignments.filter(d => d.status === 'kenneled');
+    const elimDogs = state.dogAssignments.filter(d => d.status === 'eliminated');
+
+    freeDogs.forEach((dog, i) => {
+      html += `
+        <div class="result-card">
+          <div class="result-icon icon-dog">🐕</div>
+          <div class="result-info">
+            <div class="result-label">Dog ${i + 1}</div>
+            <div class="result-location loc-blue">${dog.location}</div>
+          </div>
+        </div>`;
+    });
+
+    kenneledDogs.forEach((dog, i) => {
+      html += `
+        <div class="result-card">
+          <div class="result-icon icon-kennel">🐕</div>
+          <div class="result-info">
+            <div class="result-label">Dog (Kenneled)</div>
+            <div class="result-location loc-kennel">Kennel</div>
+          </div>
+        </div>`;
+    });
+
+    elimDogs.forEach((dog, i) => {
+      html += `
+        <div class="result-card">
+          <div class="result-icon icon-eliminated">💀</div>
+          <div class="result-info">
+            <div class="result-label">Dog (Eliminated)</div>
+            <div class="result-location loc-red">Removed</div>
+          </div>
+        </div>`;
+    });
+
+    html += `</div>`;
+  } else {
+    html += `
+      <div class="section">
+        <div class="empty-state">
+          <div class="big-icon">🎯</div>
+          Press "Assign Locations" to distribute<br>the Leader Token and Dogs
+        </div>
+      </div>`;
+  }
+
+  // Locations
+  html += `
+    <div class="divider"></div>
+    <div class="section">
+      <div class="section-title">Locations (tap to eliminate/restore)</div>
+      <div class="loc-grid">`;
+
+  ALL_LOCATIONS.forEach(loc => {
+    const isElim = state.eliminatedLocations.has(loc);
+    const isKennel = loc === "Kennel";
+    let cls = 'loc-chip';
+    if (isElim) cls += ' eliminated';
+    if (isKennel) cls += ' kennel-loc';
+
+    html += `<div class="${cls}" onclick="${isKennel ? '' : `toggleLocation('${loc.replace(/'/g, "\\'")}')`}" style="${isKennel ? 'cursor:default;' : ''}">${loc}${isKennel ? ' 🔒' : ''}</div>`;
+  });
+
+  html += `</div></div>`;
+
+  // Reset
+  html += `<button class="reset-btn" onclick="showConfirm('reset')">↻ Reset Game</button>`;
+
+  // Confirm overlay
+  if (confirmAction) {
+    let title, msg, btnClass, btnText, action;
+    if (confirmAction === 'kennel') {
+      title = 'Kennel a Dog?';
+      msg = `Move 1 Free Dog to the Kennel. (${state.freeDogs} Free remaining)`;
+      btnClass = 'btn-confirm-purple';
+      btnText = 'Kennel';
+      action = 'kennelDog()';
+    } else if (confirmAction === 'eliminate') {
+      title = 'Eliminate a Dog?';
+      msg = `Permanently remove 1 Free Dog from the game. (${state.freeDogs} Free remaining)`;
+      btnClass = 'btn-confirm-red';
+      btnText = 'Eliminate';
+      action = 'eliminateDog()';
+    } else if (confirmAction === 'reset') {
+      title = 'Reset Game?';
+      msg = 'This will reset all Dogs, Locations, and assignments.';
+      btnClass = 'btn-confirm-reset';
+      btnText = 'Reset';
+      action = 'resetGame()';
+    }
+
+    html += `
+      <div class="confirm-overlay" onclick="cancelConfirm()">
+        <div class="confirm-box" onclick="event.stopPropagation()">
+          <h3>${title}</h3>
+          <p>${msg}</p>
+          <div class="confirm-btns">
+            <button class="btn-cancel" onclick="cancelConfirm()">Cancel</button>
+            <button class="${btnClass}" onclick="${action}">${btnText}</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  app.innerHTML = html;
+}
+
+// Init
+render();
+</script>
+</body>
+</html>
