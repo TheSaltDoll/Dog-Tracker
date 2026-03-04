@@ -480,7 +480,9 @@ function toggleLocation(loc) {
     if (loc === "Base Helicopter") {
       try { new Audio('smashedup.mp3').play(); } catch(e) {}
     }
-
+    if (loc === "Radio Room") {
+      try { new Audio('radiosgone.mp3').play(); } catch(e) {}
+    }
   }
   // Clear assignments when locations change
   state.hasAssigned = false;
