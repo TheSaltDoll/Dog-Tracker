@@ -475,6 +475,10 @@ function toggleLocation(loc) {
     if (loc === "Boiler Room") {
       try { new Audio('itsgone.mp3').play(); } catch(e) {}
     }
+    if (loc === "Base Helicopter") {
+      try { new Audio('smashedup.mp3').play(); } catch(e) {}
+    }
+
   }
   // Clear assignments when locations change
   state.hasAssigned = false;
