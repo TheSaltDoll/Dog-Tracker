@@ -471,6 +471,10 @@ function toggleLocation(loc) {
     state.eliminatedLocations.delete(loc);
   } else {
     state.eliminatedLocations.add(loc);
+    // Play sound when Boiler Room is eliminated
+    if (loc === "Boiler Room") {
+      try { new Audio('itsgone.mp3').play(); } catch(e) {}
+    }
   }
   // Clear assignments when locations change
   state.hasAssigned = false;
