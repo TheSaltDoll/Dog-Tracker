@@ -483,6 +483,9 @@ function toggleLocation(loc) {
     if (loc === "Radio Room") {
       try { new Audio('radiosgone.mp3').play(); } catch(e) {}
     }
+    if (loc === "Generator Room") {
+      try { new Audio('blewgenerator.mp3').play(); } catch(e) {}
+    }
   }
   // Clear assignments when locations change
   state.hasAssigned = false;
