@@ -451,6 +451,7 @@ function kennelDog() {
   state.leaderLocation = null;
   state.dogAssignments = [];
   confirmAction = null;
+  try { new Audio('putmutt.mp3').play(); } catch(e) {}
   render();
 }
 
