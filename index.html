@@ -463,6 +463,7 @@ function eliminateDog() {
   state.leaderLocation = null;
   state.dogAssignments = [];
   confirmAction = null;
+  try { new Audio('eatdog.mp3').play(); } catch(e) {}  
   render();
 }
 
