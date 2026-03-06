@@ -378,6 +378,7 @@ function doAssignment() {
         state.freeDogs += state.kenneledDogs;
         state.kenneledDogs = 0;
         state.kennelReleaseOccurred = true;
+        try { new Audio('wholetdogsout.mp3').play(); } catch(e) {}
       }
       // Redraw from non-Kennel locations
       pool = pool.filter(l => l !== "Kennel");
