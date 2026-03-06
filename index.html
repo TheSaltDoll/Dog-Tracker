@@ -59,6 +59,7 @@
     padding: 8px 0 16px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 16px;
+    position: relative;
   }
   .header h1 {
     font-size: 22px;
@@ -68,6 +69,24 @@
     text-shadow: 0 0 20px var(--accent-glow);
   }
   .header .sub { font-size: 11px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+  .music-btn {
+    position: absolute;
+    top: 8px;
+    right: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 14px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .music-btn:active { transform: scale(0.94); }
+  .music-btn.playing { color: var(--accent); border-color: rgba(212,168,67,0.4); }
 
   /* Sections */
   .section { margin-bottom: 16px; }
@@ -305,6 +324,48 @@
 <div class="app" id="app"></div>
 
 <script>
+// Background music system
+const bgMusic = new Audio('thing-theme.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.4;
+let musicPlaying = false;
+let musicStarted = false;
+
+function toggleMusic() {
+  if (musicPlaying) {
+    bgMusic.pause();
+    musicPlaying = false;
+  } else {
+    bgMusic.play().then(() => { musicPlaying = true; musicStarted = true; }).catch(e => {});
+  }
+  render();
+}
+
+// Start music on first user interaction (iOS requirement)
+function tryStartMusic() {
+  if (!musicStarted) {
+    bgMusic.play().then(() => { musicPlaying = true; musicStarted = true; render(); }).catch(e => {});
+    document.removeEventListener('touchstart', tryStartMusic);
+    document.removeEventListener('click', tryStartMusic);
+  }
+}
+document.addEventListener('touchstart', tryStartMusic, { once: true });
+document.addEventListener('click', tryStartMusic, { once: true });
+
+// Play a sound effect, auto-pausing background music and resuming when done
+function playSFX(file) {
+  try {
+    const sfx = new Audio(file);
+    if (musicPlaying) {
+      bgMusic.pause();
+      sfx.addEventListener('ended', () => {
+        if (musicPlaying) bgMusic.play().catch(e => {});
+      });
+    }
+    sfx.play().catch(e => {});
+  } catch(e) {}
+}
+
 const ALL_LOCATIONS = [
   "Armory", "Base Helicopter", "Boiler Room", "Generator Room",
   "Kitchen", "Laboratory", "Radio Room", "Warehouse",
@@ -379,7 +440,7 @@ function doAssignment() {
         state.freeDogs += state.kenneledDogs;
         state.kenneledDogs = 0;
         state.kennelReleaseOccurred = true;
-        try { new Audio('wholetdogsout.mp3').play(); } catch(e) {}
+        playSFX('wholetdogsout.mp3');
       }
       // Redraw from non-Kennel locations
       pool = pool.filter(l => l !== "Kennel");
@@ -453,7 +514,7 @@ function kennelDog() {
   state.leaderLocation = null;
   state.dogAssignments = [];
   confirmAction = null;
-  try { new Audio('putmutt.mp3').play(); } catch(e) {}
+  playSFX('putmutt.mp3');
   render();
 }
 
@@ -465,7 +526,7 @@ function eliminateDog() {
   state.leaderLocation = null;
   state.dogAssignments = [];
   confirmAction = null;
-  try { new Audio('eatdog.mp3').play(); } catch(e) {}  
+  playSFX('eatdog.mp3');  
   render();
 }
 
@@ -477,16 +538,16 @@ function toggleLocation(loc) {
     state.eliminatedLocations.add(loc);
     // Play sound when Boiler Room is eliminated
     if (loc === "Boiler Room") {
-      try { new Audio('itsgone.mp3').play(); } catch(e) {}
+      playSFX('itsgone.mp3');
     }
     if (loc === "Base Helicopter") {
-      try { new Audio('smashedup.mp3').play(); } catch(e) {}
+      playSFX('smashedup.mp3');
     }
     if (loc === "Radio Room") {
-      try { new Audio('radiosgone.mp3').play(); } catch(e) {}
+      playSFX('radiosgone.mp3');
     }
     if (loc === "Generator Room") {
-      try { new Audio('blewgenerator.mp3').play(); } catch(e) {}
+      playSFX('blewgenerator.mp3');
     }
   }
   // Clear assignments when locations change
@@ -527,6 +588,9 @@ function render() {
     <div class="header">
       <h1>🐕 Dog Tracker</h1>
       <div class="sub">Board Game Helper</div>
+      <button class="music-btn ${musicPlaying ? 'playing' : ''}" onclick="toggleMusic()">
+        ${musicPlaying ? '🔊' : '🔇'}
+      </button>
     </div>
 
     <div class="status-bar">
